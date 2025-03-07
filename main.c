@@ -9,15 +9,15 @@ int EcritFichier(FILE * fich_lect, char* nom_fich_ecrit, int nb_lignes){
 		return 1;
 	}
 
+
 	char * buffer = malloc(MAX_SIZE);
-	fgets(buffer, MAX_SIZE, fich_lect);
+	fgets(buffer MAX_SIZE, fich_lect);
 	fputs(buffer, fich_ecrit);
 	
 	fclose(fich_lect);
 	fclose(fich_ecrit);	
 	return(0);
 }
-
 
 int main(int argc, char* argv[]){
 	/*if (argc > 2 ){

@@ -13,27 +13,33 @@
 	  yylval.nb = atoi(yytext);
 	  return tNB;
 	}
-"==" { return TCOMP; }
-"!=" { return NE; }
+"==" { return tCOMP; }
+"!=" { return tNE; }
 "="	{ return tEGAL; }
 ">" { return tBT; }
 "<" { return tLT; }
-"<=" { return LE; }
-">=" { return GE; }
+"<=" { return tLE; }
+">=" { return tGE; }
 "-"	{ return tSUB; }
 "+"	{ return tADD; }
 "*"	{ return tMUL; }
 "/"	{ return tFSLASH; }
+"%" {return tMODULO; }
 "("	{ return tOP; }
 ")"	{ return tCP; }
 "if" { return tIF; }
 "else" { return tELSE; }
 "while" { return tWHILE; }
 "int" { return tINT; }
+"char" { return tCHAR; }
+"string" { return tSTRING; }
+"float" { return tFLOAT; }
 "{" { return tOB; }
 "}" { return tCB; }
 "," { return tCOMA; }
 ";" { return tSEMICOL; }
+"\"" { return tDQUOTE; }
+"\'" {return tQUOTE; }
 "NULL" { return tNULL; }
 "&&" { return tAND;}
 "||" { return tOR; }
@@ -42,9 +48,14 @@
 "#" { return tSHARP}
 "print" { return tPRINT; }
 [a-zA-Z0-9_]+	{
-	  yylval.var = yytext[0];
+	  yylval.var = strdup(yytext);
 	  return tID;
 	}
+["(a-zA-Z0-9_)+"]	{
+	  yylval.var = strdup(yytext)t;
+	  return tACTUALSTRING;
+	}
+
 \n	{ return tFL; }
 .	{ return tERROR; }
 
