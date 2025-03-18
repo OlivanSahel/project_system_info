@@ -5,10 +5,10 @@
 %}
 
 %option noyywrap
-
+%option yylineno
 %%
 
-[ \t]+	{};
+[\n \t]+	{};
 [0-9]+	{
 	  yylval.nb = atoi(yytext);
 	  return tNB;
@@ -45,7 +45,6 @@
 	  yylval.var = strdup(yytext);
 	  return tID;
 	}
-\n	{ return tFL; }
 .	{ return tERROR; }
 
 %%
@@ -63,7 +62,8 @@
 	  return tACTUALSTRING;
 	}
 */
-
-void main(void){
+/* 
+int main(void){
     yylex();
-}
+	return 0;
+} */

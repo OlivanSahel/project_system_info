@@ -1,11 +1,12 @@
 GRM=C.y
 LEX=an_lex_V2.l
-BIN=C
+BIN=./C
+TEST=test.c
 
 CC=gcc
 CFLAGS=-Wall -g
 
-OBJ=y.tab.o lex.yy.o main.o
+OBJ=y.tab.o lex.yy.o
 
 all: $(BIN)
 
@@ -22,5 +23,8 @@ $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $^ -o $@
 
 clean:
-	rm $(OBJ) y.tab.c y.tab.h lex.yy.c
+	rm -f $(OBJ) y.tab.c y.tab.h lex.yy.c
+
+run: $(BIN)
+	cat $(TEST) | $(BIN)
 
