@@ -3,6 +3,7 @@
 #include <stdio.h>
 int var[26];
 void yyerror(char *s);
+int yylex();
 %}
 
 %union {  
@@ -14,11 +15,13 @@ void yyerror(char *s);
 %token tAND tOR tRETURN tPRINT tFL tERROR tGE tLE tNE
 %token <nb> tNB
 %token <var> tID
+%left tADD
+%left tMUL
 %start C
 %%
 
 C: /* epsilon */
-  | C INBODY
+  | C FUNCTION
   ;
 
 TYPE :  tINT 
@@ -30,13 +33,13 @@ TYPE :  tINT
 
 BODY: tOB INBODY tCB   
 
-INBODY : INBODY tSEMICOL INBODY
-        | DECLARATION
-        | IF
-        | FUNCTION
-        | WHILE
-        |AFFECTATION
+INBODY : | INSTRUCTION INBODY ;
 
+INSTRUCTION :
+          DECLARATION 
+        | IF
+        | WHILE
+        | AFFECTATION
         ;
 
 FUNCTION: TYPE tID tOP ARGUMENTS tCP BODY  
@@ -45,49 +48,28 @@ ARGUMENTS: TYPE tID
           | TYPE tID tCOMA ARGUMENTS  
           ;
 
-DECLARATION : TYPE tID tEQ tID    
-            | TYPE tID tEQ TYPE   
-            | TYPE tID           
-            | TYPE tID tEQ FUNCTION  
-            |TYPE tID tEQ CONDITION
-            |TYPE tID tEQ CALC
+DECLARATION : TYPE tID tEQ CALC tSEMICOL
+            | TYPE tID tSEMICOL
             ;
 
-AFFECTATION : tID tEQ tID   
-            | tID tEQ VAL    
-            | tID tEQ FUNCTION     
-            | tID tEQ CONDITION
-            | tID tEQ CALC
+AFFECTATION : tID tEQ CALC tSEMICOL
             ;
 
-COMPARISON : tCOMP | tNE | tLT |tBT |tLE |tGE |tAND | 
-
-CONDITION : BODY COMPARISON BODY
-
-IF : tIF tOP CONDITION tCP BODY       
-    |tIF tOP CONDITION tCP BODY tELSE BODY
+IF : tIF tOP CALC tCP BODY       
+    |tIF tOP CALC tCP BODY tELSE BODY
    ;
 
-WHILE : tWHILE tOP CONDITION tCP BODY      
+WHILE : tWHILE tOP CALC tCP BODY      
    ;
-
-OPERATION: tADD
-          | tSUB
-          | tDIV
-          | tMUL
-          | tMODULO
           ;
 
 STRING: tDQUOTE tID tDQUOTE ;
 
-VAL : tID
+CALC :  tID
       | tNB
-      | STRING
+      | CALC tADD CALC
+      | CALC tMUL CALC
       ;
-
-CALC : VAL OPERATION VAL 
-          | VAL OPERATION CALC 
-          ;
 
 
 %%

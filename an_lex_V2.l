@@ -15,7 +15,7 @@
 	}
 "==" { return tCOMP; }
 "!=" { return tNE; }
-"="	{ return tEGAL; }
+"="	{ return tEQ; }
 ">" { return tBT; }
 "<" { return tLT; }
 "<=" { return tLE; }
@@ -23,7 +23,7 @@
 "-"	{ return tSUB; }
 "+"	{ return tADD; }
 "*"	{ return tMUL; }
-"/"	{ return tFSLASH; }
+"/"	{ return tDIV; }
 "%" {return tMODULO; }
 "("	{ return tOP; }
 ")"	{ return tCP; }
@@ -31,35 +31,38 @@
 "else" { return tELSE; }
 "while" { return tWHILE; }
 "int" { return tINT; }
-"char" { return tCHAR; }
-"string" { return tSTRING; }
-"float" { return tFLOAT; }
 "{" { return tOB; }
 "}" { return tCB; }
 "," { return tCOMA; }
 ";" { return tSEMICOL; }
-"\"" { return tDQUOTE; }
-"\'" {return tQUOTE; }
-"NULL" { return tNULL; }
 "&&" { return tAND;}
 "||" { return tOR; }
 "return" { return tRETURN; }
-"." { return tPOINT}
-"#" { return tSHARP}
+"." { return tPOINT; }
+"#" { return tSHARP;}
 "print" { return tPRINT; }
 [a-zA-Z0-9_]+	{
 	  yylval.var = strdup(yytext);
 	  return tID;
 	}
-["(a-zA-Z0-9_)+"]	{
-	  yylval.var = strdup(yytext)t;
-	  return tACTUALSTRING;
-	}
-
 \n	{ return tFL; }
 .	{ return tERROR; }
 
 %%
+/*
+"char" { return tCHAR; }
+"string" { return tSTRING; }
+"float" { return tFLOAT; }
+"\"" { return tDQUOTE; }
+"\'" {return tQUOTE; }
+"NULL" { return tNULL; }
+*/
+	/*
+["(a-zA-Z0-9_)+"]	{
+	  yylval.var = strdup(yytext)t;
+	  return tACTUALSTRING;
+	}
+*/
 
 void main(void){
     yylex();

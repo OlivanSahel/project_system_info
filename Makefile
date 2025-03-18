@@ -1,5 +1,5 @@
 GRM=C.y
-LEX=C.l
+LEX=an_lex_V2.l
 BIN=C
 
 CC=gcc
@@ -13,7 +13,7 @@ all: $(BIN)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 y.tab.c: $(GRM)
-	yacc -d $<
+	yacc -t -v -g -d $<
 
 lex.yy.c: $(LEX)
 	flex $<
