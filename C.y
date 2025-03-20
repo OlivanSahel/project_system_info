@@ -12,7 +12,7 @@ int yylex();
 }
 
 %token tCOMP tEQ tBT tLT tSUB tADD tMUL tDQUOTE tQUOTE tDIV tMODULO tOP tCP tIF tELSE tWHILE tPOINT tSHARP tINT tCHAR tFLOAT tSTRING tOB tCB tCOMA tSEMICOL tNULL 
-%token tAND tOR tRETURN tPRINT tFL tERROR tGE tLE tNE
+%token tAND tOR tRETURN tPRINT tERROR tGE tLE tNE
 %token <nb> tNB
 %token <var> tID
 %left tADD tSUB
@@ -25,15 +25,13 @@ C: %empty/* epsilon */
   ;
 
 TYPE :  tINT 
-      | tCHAR
-      | tSTRING
-      | tFLOAT
       ;
 
 
 BODY: tOB INBODY tCB   
 
-INBODY : | INSTRUCTION INBODY 
+INBODY : %empty
+      | INSTRUCTION INBODY 
          | RETURN 
          ;
 
@@ -50,7 +48,7 @@ FUNCTION: TYPE tID tOP ARGUMENTS tCP BODY  ;
 PRINT: tPRINT tOP CALC tCP tSEMICOL
       ;
 
-ARGUMENTS: 
+ARGUMENTS: %empty
           | TYPE tID                 
           | TYPE tID tCOMA ARGUMENTS  
           ;
@@ -74,6 +72,15 @@ CALC :  NUMBRE
       | CALC tMUL NUMBRE
       | CALC tDIV NUMBRE
       | CALC tSUB NUMBRE
+      | CALC tMODULO NUMBRE
+      | CALC tGE NUMBRE
+      | CALC tLE NUMBRE
+      | CALC tLT NUMBRE
+      | CALC tBT NUMBRE
+      | CALC tNE NUMBRE
+      | CALC tCOMP NUMBRE
+      | CALC tOR NUMBRE
+      | CALC tAND NUMBRE
       | tOP CALC tCP
       ;
 
