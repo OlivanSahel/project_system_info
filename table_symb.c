@@ -1,32 +1,35 @@
 //#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 struct ligne{
-    int type;
+    char* type[10];
     int isglobal;
-    char* value;
+    char* value[100];
     int isinit;
-    char* name;
+    char* name[20];
     int istemp;
 }ligne;
 
-struct ligne table_symbole[256]={NULL};
+const int taille=15;
+struct ligne table_symbole[taille]={NULL};
 
 
-void add_var(struct ligne * table,int type,int isglobal,char* val, int isinit, char* name){//ajoute a la premiere place dispo ou modifie la variable si elle existe deja
+void add_var(struct ligne * table,const char* type,int isglobal,const char* val, int isinit,const char* name){//ajoute a la premiere place dispo ou modifie la variable si elle existe deja
     int i=0;
     while (table[i].type!=NULL && table[i].name!=name){
         i++;
-        if (i==256){
+        if (i==taille){
             printf("No Place left");
             exit(EXIT_FAILURE);
         }
     }
-    table[i].type=type;
+    strcpy(table[i].type,*type);
     table[i].isglobal=isglobal;
-    table[i].value=val;
+    strcpy(table[i].value,*val);
     table[i].isglobal=isinit;
-    table[i].name=name;
+    strcpy(table[i].name,*name);
     table[i].istemp=0;
 
 }
@@ -35,17 +38,17 @@ void supr_var(struct ligne * table,char * name){
     int i=0;
     while (table[i].name!=name){
         i++;
-        if (i==256){
+        if (i==taille){
             printf("Not Found");
             exit(EXIT_FAILURE);
         }
     }
-    table[i].type=NULL;
+    strcpy(table[i].type,"NULL");
 }
 
-void add_var_temp(struct ligne * table,int type,int isglobal,char* val, int isinit, char* name){
-    int i=255;
-    while (table[i].type!=NULL){
+void add_var_temp(struct ligne * table,const char* type,int isglobal,const char* val, int isinit,const char* name){
+    int i=taille-1;
+    while (table[i].type!="NULL"){
         i--;
         if (i==-1){
             printf("No Space left");
@@ -53,18 +56,18 @@ void add_var_temp(struct ligne * table,int type,int isglobal,char* val, int isin
         }
     }
     
-    table[i].type=type;
+    strcpy(table[i].type,*type);
     table[i].isglobal=isglobal;
-    table[i].value=val;
+    strcpy(table[i].value,*val);
     table[i].isinit=isinit;
-    table[i].name=name;
+    strcpy(table[i].name,*name);
     table[i].istemp=1;
 
 }
 
 void supr_var_temp(struct ligne * table,char * name){
-    int i=255;
-    int j=255;
+    int i=taille-1;
+    int j=taille-1;
     while (table[i].name!=name){
         i--;
         if (i==-1){
@@ -74,20 +77,20 @@ void supr_var_temp(struct ligne * table,char * name){
     }
     while (table[j].istemp==1 && j>0){
         j--;
-        table[j].type=table[j-1].type;
+        strcpy(table[j].type,*table[j-1].type);
         table[j].isglobal=table[j-1].isglobal;
-        table[j].value=table[j-1].value;
+        strcpy(table[j].value,*table[j-1].value);
         table[j].isinit=table[j-1].isinit;
-        table[j].name=table[j-1].name;
+        strcpy(table[j].name,*table[j-1].name);
     }
-    table[j].type=NULL;
+    strcpy(table[j].type,"NULL");
 }
 
 struct ligne recup_ligne (struct ligne * table,char * name){
     int i=0;
     while (table[i].name!=name){
         i++;
-        if (i==256){
+        if (i==taille){
             printf("Not Found");
             exit(EXIT_FAILURE);
         }
@@ -96,7 +99,7 @@ struct ligne recup_ligne (struct ligne * table,char * name){
 }
 
 struct ligne recup_ligne_temp (struct ligne * table){
-    return table[255];
+    return table[taille-1];
 }
 
 
@@ -132,3 +135,17 @@ int get_isglobal_temp(struct ligne * table){
 int get_isinit_temp(struct ligne * table){
     return recup_ligne_temp(table).isinit;
 }
+
+void afftab(struct ligne * table){
+    for (int i=0;i<taille;i++){
+        struct ligne l=table[i];
+        printf("%s | %d | %s | %d | %s | %d \n\n",l.type,l.isglobal,l.value,l.isinit,l.name,l.istemp);
+    }
+}
+
+int main(void) {
+    afftab(table_symbole);
+    add_var(table_symbole,"int",1,"43",1,"vartest1");
+    afftab(table_symbole);
+  }
+  
