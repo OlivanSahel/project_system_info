@@ -36,11 +36,11 @@ INBODY : %empty
          ;
 
 INSTRUCTION :
-          DECLARATION 
-        | IF
-        | WHILE
-        | AFFECTATION
-        | PRINT
+          DECLARATION { $$ = $1 }
+        | IF { $$ = $1 }
+        | WHILE { $$ = $1 }
+        | AFFECTATION { $$ = $1 }
+        | PRINT { $$ = $1 }
         ;
 
 FUNCTION: TYPE tID tOP ARGUMENTS tCP BODY  ;
@@ -53,18 +53,18 @@ ARGUMENTS: %empty
           | TYPE tID tCOMA ARGUMENTS  
           ;
 
-DECLARATION : TYPE tID tEQ CALC tSEMICOL
-            | TYPE tID tSEMICOL
+DECLARATION : TYPE tID tEQ CALC tSEMICOL { $1 $2 = $4 ; }
+            | TYPE tID tSEMICOL { $1 $2 ; }
             ;
 
-AFFECTATION : tID tEQ CALC tSEMICOL
+AFFECTATION : tID tEQ CALC tSEMICOL { $1 = $2 ; }
             ;
 
-IF : tIF tOP CALC tCP BODY       
-    |tIF tOP CALC tCP BODY tELSE BODY
+IF : tIF tOP CALC tCP BODY {if ( $3 ) $5}
+    |tIF tOP CALC tCP BODY tELSE BODY {if ( $3 ) $5 else $7 }
    ;
 
-WHILE : tWHILE tOP CALC tCP BODY      
+WHILE : tWHILE tOP CALC tCP BODY { while ( $3 ) $5 }
       ;
 
 CALC :  NUMBRE
