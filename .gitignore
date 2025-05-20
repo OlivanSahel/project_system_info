@@ -5,3 +5,6 @@ C
 y.tab.*
 an_lex_V1.l
 *.gch
+lex.yy.c
+output.asm
+test.c
