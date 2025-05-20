@@ -7,6 +7,5 @@ int main() {
 	else{
 		x = y -2;
 	}
-	print(x);
 	return 0;
 }

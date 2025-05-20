@@ -3,6 +3,7 @@
 #include <string.h>
 
 #define TABLE_SIZE 15
+#define EXIT_FAILURE -1
 
 struct ligne {
     char* type;
@@ -12,6 +13,8 @@ struct ligne {
     char* name;
     int istemp;
 };
+
+
 
 struct ligne table_symbole[TABLE_SIZE] = {0};
 
@@ -128,11 +131,11 @@ int get_isglobal_temp(struct ligne* table) {
 
 int get_isinit_temp(struct ligne* table) {
     return recup_ligne_temp(table)->isinit;
-}
+} 
 
 const char* get_type(struct ligne* table, const char* name) {
     return recup_ligne(table, name)->type;
-}
+}        
 
 const char* get_type_temp(struct ligne* table) {
     return recup_ligne_temp(table)->type;
