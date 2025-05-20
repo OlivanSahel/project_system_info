@@ -27,7 +27,7 @@ char* current_endif_label;
 char* current_while_start;
 char* current_while_end;
 %}
-w
+
 %union {
     int nb;
     char* var;
@@ -112,10 +112,6 @@ DECLARATION:
 AFFECTATION:
     tID tEQ CALC tSEMICOL {
         struct ligne* l = recup_ligne(table_symbole, $1);
-        if (l==-1) {
-            fprintf(stderr, "Variable %s not declared\n", $1);
-            exit(1);
-        }
         if (strcmp(l->type, "const") == 0) {
             fprintf(stderr, "Cannot assign to const variable %s\n", $1);
             exit(1);
@@ -254,10 +250,6 @@ NUMBRE:
     }
   | tID {
         struct ligne* l = recup_ligne(table_symbole, $1);
-        if (l==-1) {
-            fprintf(stderr, "Variable %s not declared\n", $1);
-            exit(1);
-        }
         $$ = alloc_register();
         fprintf(asmfile, "MOV %s, %s\n", $$, l->value);
     }
