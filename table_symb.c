@@ -1,151 +1,176 @@
-//#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-struct ligne{
-    char* type[10];
+#define TABLE_SIZE 15
+
+struct ligne {
+    char* type;
     int isglobal;
-    char* value[100];
+    char* value;
     int isinit;
-    char* name[20];
+    char* name;
     int istemp;
-}ligne;
+};
 
-const int taille=15;
-struct ligne table_symbole[taille]={NULL};
+struct ligne table_symbole[TABLE_SIZE] = {0};
 
-
-void add_var(struct ligne * table,const char* type,int isglobal,const char* val, int isinit,const char* name){//ajoute a la premiere place dispo ou modifie la variable si elle existe deja
-    int i=0;
-    while (table[i].type!=NULL && table[i].name!=name){
+void add_var(struct ligne* table, const char* type, int isglobal, const char* val, int isinit, const char* name) {
+    int i = 0;
+    while (i < TABLE_SIZE && table[i].name != NULL) {
+        if (strcmp(table[i].name, name) == 0) {
+            printf("Variable '%s' already declared.\n", name);
+            return;
+        }
         i++;
-        if (i==taille){
-            printf("No Place left");
-            exit(EXIT_FAILURE);
+    }
+
+    if (i == TABLE_SIZE) {
+        printf("No space left in symbol table.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    table[i].type = strdup(type);
+    table[i].isglobal = isglobal;
+    table[i].value = strdup(val);
+    table[i].isinit = isinit;
+    table[i].name = strdup(name);
+    table[i].istemp = 0;
+}
+
+void supr_var(struct ligne* table, const char* name) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (table[i].name && strcmp(table[i].name, name) == 0) {
+            free(table[i].type);
+            free(table[i].value);
+            free(table[i].name);
+            table[i].type = NULL;
+            table[i].value = NULL;
+            table[i].name = NULL;
+            table[i].istemp = 0;
+            return;
         }
     }
-    strcpy(table[i].type,*type);
-    table[i].isglobal=isglobal;
-    strcpy(table[i].value,*val);
-    table[i].isglobal=isinit;
-    strcpy(table[i].name,*name);
-    table[i].istemp=0;
-
+    printf("Variable '%s' not found.\n", name);
 }
 
-void supr_var(struct ligne * table,char * name){
-    int i=0;
-    while (table[i].name!=name){
-        i++;
-        if (i==taille){
-            printf("Not Found");
-            exit(EXIT_FAILURE);
+void add_var_temp(struct ligne* table, const char* type, int isglobal, const char* val, int isinit, const char* name) {
+    for (int i = TABLE_SIZE - 1; i >= 0; i--) {
+        if (table[i].name == NULL) {
+            table[i].type = strdup(type);
+            table[i].isglobal = isglobal;
+            table[i].value = strdup(val);
+            table[i].isinit = isinit;
+            table[i].name = strdup(name);
+            table[i].istemp = 1;
+            return;
         }
     }
-    strcpy(table[i].type,"NULL");
+    printf("No space left for temporary variable.\n");
+    exit(EXIT_FAILURE);
 }
 
-void add_var_temp(struct ligne * table,const char* type,int isglobal,const char* val, int isinit,const char* name){
-    int i=taille-1;
-    while (table[i].type!="NULL"){
-        i--;
-        if (i==-1){
-            printf("No Space left");
-            exit(EXIT_FAILURE);
+void supr_var_temp(struct ligne* table, const char* name) {
+    for (int i = TABLE_SIZE - 1; i >= 0; i--) {
+        if (table[i].name && table[i].istemp && strcmp(table[i].name, name) == 0) {
+            free(table[i].type);
+            free(table[i].value);
+            free(table[i].name);
+            table[i].type = NULL;
+            table[i].value = NULL;
+            table[i].name = NULL;
+            table[i].istemp = 0;
+            return;
         }
     }
-    
-    strcpy(table[i].type,*type);
-    table[i].isglobal=isglobal;
-    strcpy(table[i].value,*val);
-    table[i].isinit=isinit;
-    strcpy(table[i].name,*name);
-    table[i].istemp=1;
-
+    printf("Temporary variable '%s' not found.\n", name);
 }
 
-void supr_var_temp(struct ligne * table,char * name){
-    int i=taille-1;
-    int j=taille-1;
-    while (table[i].name!=name){
-        i--;
-        if (i==-1){
-            printf("Not Found");
-            exit(EXIT_FAILURE);
+struct ligne* recup_ligne(struct ligne* table, const char* name) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (table[i].name && strcmp(table[i].name, name) == 0) {
+            return &table[i];
         }
     }
-    while (table[j].istemp==1 && j>0){
-        j--;
-        strcpy(table[j].type,*table[j-1].type);
-        table[j].isglobal=table[j-1].isglobal;
-        strcpy(table[j].value,*table[j-1].value);
-        table[j].isinit=table[j-1].isinit;
-        strcpy(table[j].name,*table[j-1].name);
-    }
-    strcpy(table[j].type,"NULL");
+    printf("Variable '%s' not found.\n", name);
+    exit(EXIT_FAILURE);
 }
 
-struct ligne recup_ligne (struct ligne * table,char * name){
-    int i=0;
-    while (table[i].name!=name){
-        i++;
-        if (i==taille){
-            printf("Not Found");
-            exit(EXIT_FAILURE);
+struct ligne* recup_ligne_temp(struct ligne* table) {
+    for (int i = TABLE_SIZE - 1; i >= 0; i--) {
+        if (table[i].name && table[i].istemp) {
+            return &table[i];
         }
     }
-    return table[i];
+    printf("No temporary variable found.\n");
+    exit(EXIT_FAILURE);
 }
 
-struct ligne recup_ligne_temp (struct ligne * table){
-    return table[taille-1];
+const char* get_valeur(struct ligne* table, const char* name) {
+    return recup_ligne(table, name)->value;
 }
 
-
-char* get_valeur(struct ligne * table,char * name){
-    return recup_ligne(table,name).value;
+const char* get_valeur_temp(struct ligne* table) {
+    return recup_ligne_temp(table)->value;
 }
 
-int get_type(struct ligne * table,char * name){
-    return recup_ligne(table,name).type;
+int get_isglobal(struct ligne* table, const char* name) {
+    return recup_ligne(table, name)->isglobal;
 }
 
-int get_isglobal(struct ligne * table,char * name){
-    return recup_ligne(table,name).isglobal;
+int get_isinit(struct ligne* table, const char* name) {
+    return recup_ligne(table, name)->isinit;
 }
 
-int get_isinit(struct ligne * table,char * name){
-    return recup_ligne(table,name).isinit;
+int get_isglobal_temp(struct ligne* table) {
+    return recup_ligne_temp(table)->isglobal;
 }
 
-
-char* get_valeur_temp(struct ligne * table){
-    return recup_ligne_temp(table).value;
+int get_isinit_temp(struct ligne* table) {
+    return recup_ligne_temp(table)->isinit;
 }
 
-int get_type_temp(struct ligne * table){
-    return recup_ligne_temp(table).type;
+const char* get_type(struct ligne* table, const char* name) {
+    return recup_ligne(table, name)->type;
 }
 
-int get_isglobal_temp(struct ligne * table){
-    return recup_ligne_temp(table).isglobal;
+const char* get_type_temp(struct ligne* table) {
+    return recup_ligne_temp(table)->type;
 }
 
-int get_isinit_temp(struct ligne * table){
-    return recup_ligne_temp(table).isinit;
-}
-
-void afftab(struct ligne * table){
-    for (int i=0;i<taille;i++){
-        struct ligne l=table[i];
-        printf("%s | %d | %s | %d | %s | %d \n\n",l.type,l.isglobal,l.value,l.isinit,l.name,l.istemp);
+void afftab(struct ligne* table) {
+    printf("\n---- Table des Symboles ----\n");
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (table[i].name != NULL) {
+            printf("Name: %-10s | Type: %-6s | Value: %-10s | Init: %d | Global: %d | Temp: %d\n",
+                table[i].name, table[i].type, table[i].value,
+                table[i].isinit, table[i].isglobal, table[i].istemp);
+        }
     }
+    printf("-----------------------------\n");
 }
 
+#ifdef TEST
 int main(void) {
     afftab(table_symbole);
-    add_var(table_symbole,"int",1,"43",1,"vartest1");
+
+    add_var(table_symbole, "int", 1, "43", 1, "vartest1");
+    add_var(table_symbole, "int", 1, "100", 1, "vartest2");
+
     afftab(table_symbole);
-  }
-  
+
+    supr_var(table_symbole, "vartest1");
+
+    afftab(table_symbole);
+
+    add_var_temp(table_symbole, "int", 0, "999", 1, "tmp1");
+
+    afftab(table_symbole);
+
+    supr_var_temp(table_symbole, "tmp1");
+
+    afftab(table_symbole);
+
+    return 0;
+}
+#endif

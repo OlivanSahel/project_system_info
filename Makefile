@@ -6,7 +6,7 @@ TEST=test.c
 CC=gcc
 CFLAGS=-Wall -g
 
-OBJ=y.tab.o lex.yy.o
+OBJ=y.tab.o lex.yy.o table_symb.o
 
 all: $(BIN)
 
@@ -23,8 +23,7 @@ $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $^ -o $@
 
 clean:
-	rm -f $(OBJ) y.tab.c y.tab.h lex.yy.c
+	rm -f *.o y.tab.c y.tab.h lex.yy.c output.asm $(BIN) *.output *.gv *.gch
 
 run: $(BIN)
 	cat $(TEST) | $(BIN)
-
