@@ -14,6 +14,8 @@ struct ligne {
     int istemp;
 };
 
+
+
 struct ligne table_symbole[TABLE_SIZE] = {0};
 
 

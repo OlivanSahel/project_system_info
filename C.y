@@ -112,7 +112,7 @@ DECLARATION:
 AFFECTATION:
     tID tEQ CALC tSEMICOL {
         struct ligne* l = recup_ligne(table_symbole, $1);
-        if (!l) {
+        if (l==-1) {
             fprintf(stderr, "Variable %s not declared\n", $1);
             exit(1);
         }
@@ -254,7 +254,7 @@ NUMBRE:
     }
   | tID {
         struct ligne* l = recup_ligne(table_symbole, $1);
-        if (!l) {
+        if (l==-1) {
             fprintf(stderr, "Variable %s not declared\n", $1);
             exit(1);
         }
