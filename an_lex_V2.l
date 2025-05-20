@@ -10,6 +10,7 @@
 
 %%
 
+"//".*                  { /* Skip comments */ }
 [\n \t]+                { /* Skip whitespace */ }
 [0-9]+                  { yylval.nb = atoi(yytext); return tNB; }
 "=="                    { return tCOMP; }
@@ -30,6 +31,7 @@
 "else"                  { return tELSE; }
 "while"                 { return tWHILE; }
 "int"                   { return tINT; }
+"const"                 { return tCONST; }
 "{"                     { return tOB; }
 "}"                     { return tCB; }
 ","                     { return tCOMA; }

@@ -10,13 +10,10 @@ int yylex();
 extern FILE* yyin;
 FILE* asmfile;
 
-int regCount = 0;
+#define MAX_REGS 256
+char* used_regs[MAX_REGS] = {0};
 
-char* new_register() {
-    char* reg = malloc(10);
-    sprintf(reg, "R%d", regCount++);
-    return reg;
-}
+int regCount = 0;
 
 int labelCount = 0;
 char* new_label(const char* base) {
@@ -27,39 +24,34 @@ char* new_label(const char* base) {
 
 char* current_else_label;
 char* current_endif_label;
-
-
+char* current_while_start;
+char* current_while_end;
 %}
-
+w
 %union {
     int nb;
     char* var;
     char* reg;
 }
 
-/* Tokens with values */
 %token <nb> tNB
 %token <var> tID
 
-/* Simple tokens */
 %token tCOMP tEQ tBT tLT tSUB tADD tMUL tDIV tMODULO tOP tCP tIF tELSE tWHILE tPOINT tSHARP
 %token tINT tCHAR tFLOAT tSTRING tOB tCB tCOMA tSEMICOL tNULL
-%token tAND tOR tRETURN tPRINT tERROR tGE tLE tNE
+%token tAND tOR tRETURN tPRINT tERROR tGE tLE tNE tCONST
 
-/* Non-terminals returning register names */
 %type <reg> CALC NUMBRE
+%type <var> TYPE
 
-/* Precedence */
+%start C
+
 %left tOR
 %left tAND
 %left tCOMP tNE tGE tLE tLT tBT
 %left tADD tSUB
 %left tMUL tDIV tMODULO
-
-%nonassoc LOWER_THAN_ELSE
 %nonassoc tELSE
-
-%start C
 %%
 
 C:
@@ -68,7 +60,8 @@ C:
   ;
 
 TYPE:
-    tINT
+    tINT   { $$ = "int"; }
+  | tCONST tINT { $$ = "const"; }
   ;
 
 BODY:
@@ -96,6 +89,7 @@ FUNCTION:
 PRINT:
     tPRINT tOP CALC tCP tSEMICOL {
         fprintf(asmfile, "PRINT %s\n", $3);
+        free_register($3);
     }
   ;
 
@@ -107,14 +101,11 @@ ARGUMENTS:
 
 DECLARATION:
     TYPE tID tEQ CALC tSEMICOL {
-        char *reg = new_register();
-        add_var(table_symbole, "int", 0, $4, 1, $2); // Add initialized var
-        fprintf(asmfile, "MOV %s, %s\n", reg, $4);
+        add_var(table_symbole, $1, 0, $4, 1, $2);
     }
   | TYPE tID tSEMICOL {
-        char *reg = new_register();
-        add_var(table_symbole, "int", 0, reg, 0, $2); // Add uninitialized var
-        // No MOV
+        char *reg = alloc_register();
+        add_var(table_symbole, $1, 0, reg, 0, $2);
     }
   ;
 
@@ -125,88 +116,131 @@ AFFECTATION:
             fprintf(stderr, "Variable %s not declared\n", $1);
             exit(1);
         }
-        fprintf(asmfile, "MOV %s, %s\n", l->value, $3);
+        if (strcmp(l->type, "const") == 0) {
+            fprintf(stderr, "Cannot assign to const variable %s\n", $1);
+            exit(1);
+        }
+        if (strcmp(l->value, $3) != 0) {
+          fprintf(asmfile, "MOV %s, %s\n", l->value, $3);
+          free_register($3);
+        } else {
+            // No move needed, but still mark it as freed since $3 was temp
+            // This may be unnecessary if it's being retained as a var now
+        }
+
     }
   ;
 
 IF:
     tIF tOP CALC tCP {
-        // Mid-rule action: done *before* the BODY executes
         current_else_label = new_label("ELSE");
         current_endif_label = new_label("ENDIF");
         fprintf(asmfile, "JZ %s, %s\n", $3, current_else_label);
+        free_register($3);
     }
     BODY {
-        // Mid-rule action: after THEN-body is emitted
         fprintf(asmfile, "JMP %s\n", current_endif_label);
         fprintf(asmfile, "%s:\n", current_else_label);
     }
     tELSE
     BODY {
-        // Final label after ELSE-body
         fprintf(asmfile, "%s:\n", current_endif_label);
     }
-;
+  ;
 
 WHILE:
-    tWHILE tOP CALC tCP BODY {
-        fprintf(asmfile, "; WHILE loop with condition %s\n", $3);
+    tWHILE {current_while_start = new_label("WHILE_START");
+    fprintf(asmfile, "%s:\n", current_while_start);
+    }tOP CALC tCP {
+        current_while_end = new_label("WHILE_END");
+        fprintf(asmfile, "JZ %s, %s\n", $4, current_while_end);
+        free_register($4);
+    }
+    BODY {
+        fprintf(asmfile, "JMP %s\n", current_while_start);
+        fprintf(asmfile, "%s:\n", current_while_end);
     }
   ;
 
 CALC:
     NUMBRE
   | CALC tADD CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "ADD %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tSUB CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "SUB %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tMUL CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "MUL %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tDIV CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "DIV %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tMODULO CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "MOD %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tCOMP CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_EQ %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tNE CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_NE %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tGE CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_GE %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tLE CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_LE %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tLT CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_LT %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tBT CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "CMP_GT %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tAND CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "AND %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | CALC tOR CALC {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "OR %s, %s, %s\n", $$, $1, $3);
+        free_register($1);
+        free_register($3);
     }
   | tOP CALC tCP {
         $$ = $2;
@@ -215,7 +249,7 @@ CALC:
 
 NUMBRE:
     tNB {
-        $$ = new_register();
+        $$ = alloc_register();
         fprintf(asmfile, "MOV %s, %d\n", $$, $1);
     }
   | tID {
@@ -224,13 +258,15 @@ NUMBRE:
             fprintf(stderr, "Variable %s not declared\n", $1);
             exit(1);
         }
-        $$ = strdup(l->value); // Return the register name
+        $$ = alloc_register();
+        fprintf(asmfile, "MOV %s, %s\n", $$, l->value);
     }
   ;
 
 RETURN:
     tRETURN CALC tSEMICOL {
         fprintf(asmfile, "RET %s\n", $2);
+        free_register($2);
     }
   ;
 %%
@@ -249,7 +285,6 @@ int main(void) {
         return 1;
     }
 
-    // Optional: clear symbol table at start
     memset(table_symbole, 0, sizeof(table_symbole));
 
     yyparse();

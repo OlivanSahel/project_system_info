@@ -1,12 +1,7 @@
-int main() {
-	int x = 5;
-	int y = x + 2;
-	if(x == 2){
-		x = y -1;
+int main(){
+	int x = 6;
+	while (x > 0) {
+		x = x - 1;
 	}
-	else{
-		x = y -2;
-	}
-	print(x);
 	return 0;
 }
